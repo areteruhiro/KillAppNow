@@ -68,14 +68,28 @@ public class KillAppNow implements IXposedHookLoadPackage {
                 List<ActivityManager.RunningAppProcessInfo> processes = am.getRunningAppProcesses();
 
                 String foregroundApp = null;
+
+                // 除外するパッケージ名のリスト
+                List<String> skipPackages = Arrays.asList(
+                        "com.android.vending",
+                        "com.google.android.gms",
+                        "google.gms.persistent",
+                        "com.android.systemui",
+                        "com.google.android.systemui",
+                        getDefaultLauncherPackageName() // デフォルトランチャーも除外
+                );
+
+                // フォアグラウンドアプリを特定
                 for (ActivityManager.RunningAppProcessInfo processInfo : processes) {
-                    if (processInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                    if (processInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND &&
+                            !skipPackages.contains(processInfo.processName)) {
                         foregroundApp = processInfo.processName;
                         break;
                     }
                 }
 
-                if (foregroundApp != null && !mKillIgnoreList.contains(foregroundApp) && !foregroundApp.equals(getDefaultLauncherPackageName())) {
+                // フォアグラウンドアプリが見つかった場合は強制終了
+                if (foregroundApp != null) {
                     XposedHelpers.callMethod(am, "forceStopPackage", foregroundApp);
                     String appLabel = getApplicationLabel(foregroundApp, mContext.getPackageManager());
                     Toast.makeText(mContext, "Killed: " + appLabel, Toast.LENGTH_SHORT).show();
@@ -87,6 +101,7 @@ public class KillAppNow implements IXposedHookLoadPackage {
             }
         });
     }
+
 
     // Helper method to get the default launcher package name
     private String getDefaultLauncherPackageName() {
