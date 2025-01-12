@@ -24,11 +24,17 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class KillAppNow implements IXposedHookLoadPackage {
 
-    private final List<String> mKillIgnoreList = new ArrayList<>(Arrays.asList(
+    // 除外するパッケージ名のリスト
+    List<String> skipPackages = Arrays.asList(
             "com.android.systemui",
-            "com.google.android.systemui"
-    ));
-
+            "com.google.android.systemui",
+            "com.android.vending",
+            "com.google.android.gms",
+            "google.gms.persistent",
+            "com.android.systemui",
+            "com.google.android.systemui",
+            getDefaultLauncherPackageName() // デフォルトランチャーも除外
+    );
     private Context mContext;
 
     @Override
@@ -69,15 +75,7 @@ public class KillAppNow implements IXposedHookLoadPackage {
 
                 String foregroundApp = null;
 
-                // 除外するパッケージ名のリスト
-                List<String> skipPackages = Arrays.asList(
-                        "com.android.vending",
-                        "com.google.android.gms",
-                        "google.gms.persistent",
-                        "com.android.systemui",
-                        "com.google.android.systemui",
-                        getDefaultLauncherPackageName() // デフォルトランチャーも除外
-                );
+
 
                 // フォアグラウンドアプリを特定
                 for (ActivityManager.RunningAppProcessInfo processInfo : processes) {
